@@ -4,7 +4,7 @@ First off, thank you for considering contributing to [Your Project Name]! Every 
 This document provides guidelines for contributing to this project. Following these guidelines ensures that your contribution aligns with the project's goals and will increase the chance of it being merged.
 
 ## Code of Conduct
-By participating in this project, you are expected to uphold our Code of Conduct (if you have one).
+By participating in this project, you are expected to uphold our Code of Conduct
 
 ## How Can I Contribute?
 ### 1. Reporting Bugs

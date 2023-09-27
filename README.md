@@ -55,7 +55,7 @@ python -m training watch -r <run_id>
 Replace <run_id> with the provided ID of the training run you wish to observe.
 
 ## Contributing:
-We welcome contributions! Please see the CONTRIBUTING.md file for guidelines (if you plan on having one). Or you can state here that potential contributors can create an issue or a pull request.
+We welcome contributions! Please see the CONTRIBUTING.md file for guidelines
 
 License:
 This project is licensed under MIT. See the LICENSE file for details.
