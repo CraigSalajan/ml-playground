@@ -7,25 +7,25 @@ Watch the progress of ongoing training sessions.
 Integrated with wandb for powerful monitoring capabilities.
 
 ## Installation:
-1. Clone the Repository:
+### 1. Clone the Repository:
 ```bash
 git clone git@github.com:CraigSalajan/ml-playground.git
 cd ml-playground
 ```
 
-2. Set up a Virtual Environment (Optional but recommended):
+### 2. Set up a Virtual Environment (Optional but recommended):
 ```bash
 python -m venv env
 source env/bin/activate  # On Windows use `env\Scripts\activate`
 ```
 
-3. Install the Dependencies:
+### 3. Install the Dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
 ## Usage:
-1. Training:
+### 1. Training:
 To initiate training, use the following command:
 
 ```bash
@@ -46,7 +46,7 @@ python -m training train -t <Trainer> -w
 python -m training train -t <Trainer> -ts <num_timesteps>
 ```
 
-2. Watching Training Progress:
+### 2. Watching Training Progress:
 To watch the progress of a training session:
 
 ```bash
