@@ -36,6 +36,7 @@ Optional Parameters:
 
 -w: Enable wandb integration.
 
+**Note:** This requires an environment variable WANDB_API_KEY with your wandb api key
 ```bash
 python -m training train -t <Trainer> -w
 ```
@@ -57,4 +58,4 @@ Replace <run_id> with the provided ID of the training run you wish to observe.
 We welcome contributions! Please see the CONTRIBUTING.md file for guidelines (if you plan on having one). Or you can state here that potential contributors can create an issue or a pull request.
 
 License:
-This project is licensed under [LICENSE NAME]. See the LICENSE file for details.
+This project is licensed under MIT. See the LICENSE file for details.
