@@ -25,7 +25,7 @@ class Snake(BaseTrainer):
             "gae_lambda": 0.95,
             "learning_rate": 1.5e-4,
             "living_bonus": -0.1,
-            "max_step": "4096",
+            "max_step": 4096,
             "policy": "MlpPolicy",
             "vf_coef": 0.5
         }

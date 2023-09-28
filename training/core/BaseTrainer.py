@@ -56,7 +56,7 @@ class BaseTrainer(ABC):
         return Run()
 
     def get_env(self, gym_env):
-        env = gym_env(self._filter_config())
+        env = gym_env(**self._filter_config())
         env = Monitor(env)
 
         return env
