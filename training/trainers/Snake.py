@@ -20,6 +20,17 @@ class Snake(BaseTrainer):
             "test": "test"
         }
 
+    @property
+    def parameters(self):
+        return [
+            "max_step",
+            "fps",
+            "food_reward",
+            "dist_reward",
+            "living_bonus",
+            "death_penalty"
+        ]
+
     def train(self) -> None:
         env = self.get_env(SnakeGym)
         model = self._create_model(env)

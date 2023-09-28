@@ -26,12 +26,21 @@ class BaseTrainer(ABC):
     def config(self):
         pass
 
+    @property
+    @abstractmethod
+    def parameters(self):
+        pass
+
     def __init__(self, config):
         self.project_entity = "ml-playground"
         self.model_save_path = "./models"
         self.tensorboard_logs = "./logs"
         self.timesteps = config.get('timesteps')
         self.wandb = config.get('wandb')
+        self.config.update(config)
+
+    def _filter_config(self):
+        return {k: v for k, v in self.config.items() if k in self.parameters}
 
     def wandb_init(self) -> wandb.sdk.wandb_run.Run | Run:
         if self.wandb:
@@ -46,7 +55,7 @@ class BaseTrainer(ABC):
         return Run()
 
     def get_env(self, gym_env):
-        env = gym_env()
+        env = gym_env(self._filter_config())
         env = Monitor(env)
 
         return env

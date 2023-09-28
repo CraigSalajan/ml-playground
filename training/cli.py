@@ -19,6 +19,33 @@ def get_module(trainer, config):
     mclass = getattr(module, trainer)
     return mclass(config)
 
+
+# Predefined types for certain args (can be extended)
+ARG_TYPES = {
+    'learning_rate': float,
+    'epochs': int,
+    'use_feature_x': bool
+}
+
+
+def cast_type(key: str, value: str):
+    """
+    Cast the string value to its appropriate type based on key.
+    """
+    if key in ARG_TYPES:
+        return ARG_TYPES[key](value)
+    else:
+        # If no predefined type, try best-effort casting (this can be adjusted)
+        if value.isdigit():
+            return int(value)
+        try:
+            return float(value)
+        except ValueError:
+            if value.lower() in ['true', 'false']:
+                return value.lower() == 'true'
+            return value
+
+
 @app.callback()
 def main(
         version: Optional[bool] = typer.Option(
@@ -33,8 +60,11 @@ def main(
     return
 
 
-@app.command()
+@app.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
+)
 def train(
+        ctx: typer.Context,
         trainer: str = typer.Option(
             None,
             "--trainer",
@@ -58,6 +88,11 @@ def train(
         "wandb": wandb,
         "timesteps": timesteps
     }
+
+    for key, value in zip(ctx.args[::2], ctx.args[1::2]):
+        key = key.strip("--")
+        config[key] = cast_type(key, value)
+
     instance = get_module(trainer, config)
     instance.train()
 

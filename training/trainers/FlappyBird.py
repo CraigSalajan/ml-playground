@@ -11,6 +11,10 @@ from training.core.BaseTrainer import BaseTrainer
 class FlappyBird(BaseTrainer):
 
     @property
+    def parameters(self):
+        return []
+
+    @property
     def project_name(self):
         return "Flappy-Bird-PPO"
 
