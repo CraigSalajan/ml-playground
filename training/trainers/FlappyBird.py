@@ -1,4 +1,3 @@
-import os
 import time
 
 import numpy as np
@@ -10,6 +9,9 @@ from training.core.BaseTrainer import BaseTrainer
 
 class FlappyBird(BaseTrainer):
 
+    def __init__(self, config):
+        super().__init__(config, FlappyBirdSimpleGym)
+
     @property
     def parameters(self):
         return []
@@ -19,41 +21,19 @@ class FlappyBird(BaseTrainer):
         return "Flappy-Bird-PPO"
 
     @property
+    def training_algorithm(self):
+        return PPO
+
+    @property
     def config(self):
         return {
-            "test": "test"
+            "ent_coef": 0.02,
+            "gamma": 0.99,
+            "gae_lambda": 0.95,
+            "learning_rate": 1.5e-4,
+            "policy": "MlpPolicy",
+            "vf_coef": 0.5
         }
-
-    def train(self) -> None:
-        env = self.get_env(FlappyBirdSimpleGym)
-        model = self._create_model(env)
-
-        super().train(model)
-
-    def _create_model(self, env):
-        return PPO(
-            "MlpPolicy",
-            env,
-            tensorboard_log=f"{self.tensorboard_logs}/{self.project_name}",
-            device="cuda"
-        )
-
-    def _get_model(self, run_id, env, current_model, current_iteration):
-        filenames = os.listdir(f"{self.model_save_path}/{self.project_name}/{run_id}")
-
-        max_value = max(int(filename.strip('training_timesteps__steps.zip')) for filename in filenames if
-                        filename.endswith(".zip") and filename.startswith("training"))
-
-        if max_value is None or max_value == current_iteration:
-            return current_model, max_value
-
-        print(f"Loading training model at episode {max_value}")
-        try:
-            return (PPO.load(
-                f"{self.model_save_path}/{self.project_name}/{run_id}/training_timesteps__{str(max_value)}_steps"),
-                    max_value)
-        except:
-            return self._create_model(env), None
 
     def watch(self, run_id):
         fps = 30

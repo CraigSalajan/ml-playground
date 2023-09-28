@@ -1,14 +1,12 @@
 import os
-import random
-import string
-
-import typer
-import wandb
-
 from abc import abstractmethod, ABC
 
+import torch
+import typer
+import wandb
 from stable_baselines3.common.callbacks import CheckpointCallback
 from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.vec_env import SubprocVecEnv
 from wandb.integration.sb3 import WandbCallback
 
 from training.core.Run import Run
@@ -31,16 +29,52 @@ class BaseTrainer(ABC):
     def parameters(self):
         pass
 
-    def __init__(self, config):
+    @property
+    @abstractmethod
+    def training_algorithm(self):
+        pass
+
+    def __init__(self, config, gym):
         self.project_entity = "ml-playground"
         self.model_save_path = "./models"
         self.tensorboard_logs = "./logs"
         self.timesteps = config.get('timesteps')
         self.wandb = config.get('wandb')
         self.config.update(config)
+        self.gym = gym
 
     def _filter_config(self):
         return {k: v for k, v in self.config.items() if k in self.parameters}
+
+    def _create_model(self, env):
+        return self.training_algorithm(
+            device="cuda",
+            ent_coef=self.config.get("ent_coef"),
+            env=env,
+            gae_lambda=self.config.get("gae_lambda"),
+            gamma=self.config.get("gamma"),
+            learning_rate=self.config.get("learning_rate"),
+            policy=self.config.get("policy"),
+            tensorboard_log=f"{self.tensorboard_logs}/{self.project_name}",
+            vf_coef=self.config.get("vf_coef")
+        )
+
+    def _get_model(self, run_id, env, current_model, current_iteration):
+        filenames = os.listdir(f"{self.model_save_path}/{self.project_name}/{run_id}")
+
+        max_value = max(int(filename.strip('training_timesteps__steps.zip')) for filename in filenames if
+                        filename.endswith(".zip") and filename.startswith("training"))
+
+        if max_value is None or max_value == current_iteration:
+            return current_model, max_value
+
+        print(f"Loading training model at episode {max_value}")
+        try:
+            return (self.training_algorithm.load(
+                f"{self.model_save_path}/{self.project_name}/{run_id}/training_timesteps__{str(max_value)}_steps"),
+                    max_value)
+        except:
+            return self._create_model(env), None
 
     def wandb_init(self) -> wandb.sdk.wandb_run.Run | Run:
         if self.wandb:
@@ -55,15 +89,27 @@ class BaseTrainer(ABC):
 
         return Run()
 
-    def get_env(self, gym_env):
-        env = gym_env(**self._filter_config())
-        env = Monitor(env)
+    def _create_env(self):
+        def _init():
+            return Monitor(self.gym(**self._filter_config()))
+
+        return _init
+
+    def get_env(self):
+        envs = [self._create_env() for _ in range(self.config.get("num_envs"))]
+        env = SubprocVecEnv(envs)
 
         return env
 
-    @abstractmethod
-    def train(self, model) -> None:
+    def train(self) -> None:
+        if torch.cuda.is_available():
+            print(torch.cuda.get_device_name())
+        else:
+            print("CPU Training")
+
         run = self.wandb_init()
+        env = self.get_env()
+        model = self._create_model(env)
 
         typer.echo(f"Starting run {run.id}")
 
