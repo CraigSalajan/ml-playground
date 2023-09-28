@@ -17,18 +17,28 @@ class Snake(BaseTrainer):
     @property
     def config(self):
         return {
-            "test": "test"
+            "death_penalty": -10,
+            "dist_reward": 10,
+            "ent_coef": 0.05,
+            "food_reward": 15,
+            "gamma": 0.99,
+            "gae_lambda": 0.95,
+            "learning_rate": 3e-4,
+            "living_bonus": -1,
+            "max_step": "4096",
+            "policy": "MlpPolicy",
+            "vf_coef": 0.5
         }
 
     @property
     def parameters(self):
         return [
-            "max_step",
-            "fps",
-            "food_reward",
+            "death_penalty",
             "dist_reward",
+            "food_reward",
+            "fps",
             "living_bonus",
-            "death_penalty"
+            "max_step"
         ]
 
     def train(self) -> None:
@@ -39,10 +49,15 @@ class Snake(BaseTrainer):
 
     def _create_model(self, env):
         return PPO(
-            "MlpPolicy",
-            env,
+            device="cuda",
+            ent_coef=self.config.get("ent_coef"),
+            env=env,
+            gae_lambda=self.config.get("gae_lambda"),
+            gamma=self.config.get("gamma"),
+            learning_rate=self.config.get("learning_rate"),
+            policy=self.config.get("policy"),
             tensorboard_log=f"{self.tensorboard_logs}/{self.project_name}",
-            device="cuda"
+            vf_coef=self.config.get("vf_coef")
         )
 
     def _get_model(self, run_id, env, current_model, current_iteration):

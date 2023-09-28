@@ -49,7 +49,8 @@ class BaseTrainer(ABC):
                 project=self.project_name,
                 entity=self.project_entity,
                 monitor_gym=True,
-                sync_tensorboard=True
+                sync_tensorboard=True,
+                config=self.config
             )
 
         return Run()
