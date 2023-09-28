@@ -17,14 +17,14 @@ class Snake(BaseTrainer):
     @property
     def config(self):
         return {
-            "death_penalty": -10,
+            "death_penalty": -50,
             "dist_reward": 10,
-            "ent_coef": 0.05,
-            "food_reward": 15,
+            "ent_coef": 0.02,
+            "food_reward": 25,
             "gamma": 0.99,
             "gae_lambda": 0.95,
-            "learning_rate": 3e-4,
-            "living_bonus": -1,
+            "learning_rate": 1.5e-4,
+            "living_bonus": -0.1,
             "max_step": "4096",
             "policy": "MlpPolicy",
             "vf_coef": 0.5
