@@ -4,15 +4,15 @@ import time
 import numpy as np
 from stable_baselines3 import PPO
 
-from gyms.FlappyBird.FlappyBirdSimpleGym import FlappyBirdSimpleGym
+from gyms.Snake.SnakeGym import SnakeGym
 from training.core.BaseTrainer import BaseTrainer
 
 
-class FlappyBird(BaseTrainer):
+class Snake(BaseTrainer):
 
     @property
     def project_name(self):
-        return "Flappy-Bird-PPO"
+        return "Snake-PPO"
 
     @property
     def config(self):
@@ -21,7 +21,7 @@ class FlappyBird(BaseTrainer):
         }
 
     def train(self) -> None:
-        env = self.get_env(FlappyBirdSimpleGym)
+        env = self.get_env(SnakeGym)
         model = self._create_model(env)
 
         super().train(model)
@@ -54,7 +54,7 @@ class FlappyBird(BaseTrainer):
     def watch(self, run_id):
         fps = 30
         frame_time = 1.0 / fps
-        env = FlappyBirdSimpleGym()
+        env = SnakeGym( render_mode="human", max_step=1000000)
         model, iteration = self._get_model(run_id, env, None, None)
 
         while True:
@@ -65,7 +65,7 @@ class FlappyBird(BaseTrainer):
                 start_time = time.time()
 
                 env.render()
-                state = np.expand_dims(state, axis=0)
+                state = env.get_obs()
                 action, _ = model.predict(state)
                 next_state, reward, done, _, __ = env.step(action)
                 state = next_state
@@ -78,7 +78,5 @@ class FlappyBird(BaseTrainer):
             model, iteration = self._get_model(run_id, env, model, iteration)
 
     def play(self):
-        pass
-
-
-
+        env = SnakeGym()
+        env.play()

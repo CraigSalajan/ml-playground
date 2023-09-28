@@ -84,3 +84,11 @@ class BaseTrainer(ABC):
 
         if self.wandb:
             wandb.finish()
+
+    @abstractmethod
+    def watch(self, run_id):
+        pass
+
+    @abstractmethod
+    def play(self):
+        pass

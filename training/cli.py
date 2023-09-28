@@ -14,6 +14,11 @@ def _version_callback(value: bool) -> None:
         raise typer.Exit()
 
 
+def get_module(trainer, config):
+    module = importlib.import_module("training.trainers")
+    mclass = getattr(module, trainer)
+    return mclass(config)
+
 @app.callback()
 def main(
         version: Optional[bool] = typer.Option(
@@ -49,13 +54,11 @@ def train(
             help="Number of timesteps to train with"
         )
 ) -> None:
-    module = importlib.import_module("training.trainers")
-    mclass = getattr(module, trainer)
     config = {
         "wandb": wandb,
         "timesteps": timesteps
     }
-    instance = mclass(config)
+    instance = get_module(trainer, config)
     instance.train()
 
 
@@ -74,7 +77,18 @@ def watch(
             help="Run ID to watch"
         )
 ) -> None:
-    module = importlib.import_module("training.trainers")
-    mclass = getattr(module, trainer)
-    instance = mclass({})
+    instance = get_module(trainer, {})
     instance.watch(run_id)
+
+
+@app.command()
+def play(
+        trainer: str = typer.Option(
+            None,
+            "--trainer",
+            "-t",
+            help="Trainer to use"
+        ),
+) -> None:
+    instance = get_module(trainer, {})
+    instance.play()
