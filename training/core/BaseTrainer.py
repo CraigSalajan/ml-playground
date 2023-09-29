@@ -47,13 +47,16 @@ class BaseTrainer(ABC):
         return {k: v for k, v in self.config.items() if k in self.parameters}
 
     def _create_model(self, env):
+        n_steps = self.config.get("max_step") * self.config.get("num_envs")
         return self.training_algorithm(
+            batch_size= n_steps // 10,
             device="cuda",
             ent_coef=self.config.get("ent_coef"),
             env=env,
             gae_lambda=self.config.get("gae_lambda"),
             gamma=self.config.get("gamma"),
             learning_rate=self.config.get("learning_rate"),
+            n_steps=n_steps,
             policy=self.config.get("policy"),
             tensorboard_log=f"{self.tensorboard_logs}/{self.project_name}",
             vf_coef=self.config.get("vf_coef")
