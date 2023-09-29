@@ -116,17 +116,17 @@ class Snake:
             self.score += 1
             self.grow(x, y)
             self.food.new_food(self.blocks)
-            reward += self.food_reward
+            reward = self.food_reward
         else:
             self.move(x, y)
             for block in self.body:
                 if self.head == block:
-                    reward += self.death_penalty * (len(self.body) / self.init_length)
+                    reward = (self.death_penalty * (len(self.body) / self.init_length)) * 2
                     dead = True
             if self.head.x >= self.blocks_x or self.head.x < 0 or self.head.y < 0 or self.head.y >= self.blocks_x:
                 dead = True
-        if dead:
-            reward += self.death_penalty * (len(self.body) / self.init_length)
+                reward += self.death_penalty * (len(self.body) / self.init_length)
+
         return self.observation(dead), reward, dead, truncated
 
     def observation(self, dead=False):
