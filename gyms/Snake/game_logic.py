@@ -109,7 +109,7 @@ class Snake:
         self.head.x += step[0]
         self.head.y += step[1]
 
-        reward = self.living_bonus + self.calc_reward() + self.compute_surrounding_reward()
+        reward = self.living_bonus + self.calc_reward()
         dead = False
 
         if self.head == self.food.block:
