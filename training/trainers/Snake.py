@@ -50,7 +50,7 @@ class Snake(BaseTrainer):
     def watch(self, run_id):
         fps = 30
         frame_time = 1.0 / fps
-        env = SnakeGym( render_mode="human", max_step=1000000)
+        env = SnakeGym(render_mode="human", max_step=self.config.get("max_step"))
         model, iteration = self._get_model(run_id, env, None, None)
 
         while True:
