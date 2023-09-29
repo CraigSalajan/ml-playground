@@ -71,7 +71,7 @@ class BaseTrainer(ABC):
         print(f"Loading training model at episode {max_value}")
         try:
             return (self.training_algorithm.load(
-                f"{self.model_save_path}/{self.project_name}/{run_id}/training_timesteps__{str(max_value)}_steps"),
+                f"{self.model_save_path}/{self.project_name}/{run_id}/training_timesteps__{str(max_value)}_steps", env),
                     max_value)
         except:
             return self._create_model(env), None
@@ -109,7 +109,11 @@ class BaseTrainer(ABC):
 
         run = self.wandb_init()
         env = self.get_env()
-        model = self._create_model(env)
+
+        if self.config.get("run_id") is not None:
+            model, _ = self._get_model(self.config.get("run_id"), env, None, None)
+        else:
+            model = self._create_model(env)
 
         typer.echo(f"Starting run {run.id}")
 

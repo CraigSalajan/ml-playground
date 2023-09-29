@@ -9,19 +9,7 @@ from training.core.BaseTrainer import BaseTrainer
 class Snake(BaseTrainer):
 
     def __init__(self, config):
-        super().__init__(config, SnakeGym)
-
-    @property
-    def project_name(self):
-        return "Snake-PPO"
-
-    @property
-    def training_algorithm(self):
-        return PPO
-
-    @property
-    def config(self):
-        return {
+        self._config = {
             "death_penalty": -10,
             "dist_reward": 10,
             "ent_coef": 0.02,
@@ -35,6 +23,23 @@ class Snake(BaseTrainer):
             "policy": "MlpPolicy",
             "vf_coef": 0.5
         }
+        super().__init__(config, SnakeGym)
+
+    @property
+    def project_name(self):
+        return "Snake-PPO"
+
+    @property
+    def training_algorithm(self):
+        return PPO
+
+    @property
+    def config(self):
+        return self._config
+
+    @config.setter
+    def config(self, new_config):
+        self._config.update(new_config)
 
     @property
     def parameters(self):

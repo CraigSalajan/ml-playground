@@ -77,6 +77,12 @@ def train(
             "-w",
             help="Determines whether to use Weights & Biases. Will need a valid API Key in the WANDB_API_KEY Environment Variable to work"
         ),
+        run_id: Optional[str] = typer.Option(
+            None,
+            "--run_id",
+            "-r",
+            help="Run ID to continue from if loading an previous model"
+        ),
         timesteps: Optional[int] = typer.Option(
             100000,
             "--timesteps",
@@ -86,7 +92,8 @@ def train(
 ) -> None:
     config = {
         "wandb": wandb,
-        "timesteps": timesteps
+        "timesteps": timesteps,
+        "run_id": run_id
     }
 
     for key, value in zip(ctx.args[::2], ctx.args[1::2]):

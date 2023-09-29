@@ -121,6 +121,7 @@ class Snake:
             self.move(x, y)
             for block in self.body:
                 if self.head == block:
+                    reward += self.death_penalty * (len(self.body) / self.init_length)
                     dead = True
             if self.head.x >= self.blocks_x or self.head.x < 0 or self.head.y < 0 or self.head.y >= self.blocks_x:
                 dead = True
