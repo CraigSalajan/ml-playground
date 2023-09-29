@@ -22,7 +22,7 @@ class Snake(BaseTrainer):
     @property
     def config(self):
         return {
-            "death_penalty": -100,
+            "death_penalty": -10,
             "dist_reward": 10,
             "ent_coef": 0.02,
             "food_reward": 25,

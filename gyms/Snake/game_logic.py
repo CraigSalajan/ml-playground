@@ -102,15 +102,40 @@ class Snake:
             if self.head.x >= self.blocks_x or self.head.x < 0 or self.head.y < 0 or self.head.y >= self.blocks_x:
                 dead = True
         if dead:
-            reward = self.death_penalty
+            reward = self.death_penalty * (len(self.body) / self.init_length)
         return self.observation(dead), reward, dead, truncated
 
     def observation(self, dead=False):
+        # dx = self.head.x - self.food.block.x
+        # dy = self.head.y - self.food.block.y
+        # dx, dy = normalize(dx, dy)
+        # d0, d1, d2, d3 = self.calc_distance(dead)
+        # return np.array([dx, dy, d0, d1, d2, d3], dtype=np.float32)
+        # Direction to the food from the head
         dx = self.head.x - self.food.block.x
         dy = self.head.y - self.food.block.y
         dx, dy = normalize(dx, dy)
+
+        # Relative position of the head to the tail
+        tail_dx = self.head.x - self.body[-1].x
+        tail_dy = self.head.y - self.body[-1].y
+        tail_dx, tail_dy = normalize(tail_dx, tail_dy)
+
         d0, d1, d2, d3 = self.calc_distance(dead)
-        return np.array([dx, dy, d0, d1, d2, d3], dtype=np.float32)
+
+        # Check for obstacles in each direction: Down, Up, Right, Left
+        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        obstacles = []
+
+        for dir in directions:
+            x, y = self.head.x + dir[0], self.head.y + dir[1]
+            if x < 0 or x >= self.blocks_x or y < 0 or y >= self.blocks_y or any(
+                    block.x == x and block.y == y for block in self.body):
+                obstacles.append(1)  # Obstacle detected
+            else:
+                obstacles.append(0)  # No obstacle
+
+        return np.array([dx, dy, tail_dx, tail_dy, d0, d1, d2, d3] + obstacles, dtype=np.float32)
 
     def calc_distance(self, dead):
         if dead:
