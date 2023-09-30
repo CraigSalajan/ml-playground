@@ -70,18 +70,21 @@ class Snake:
         update_screen(self.screen, self)
         handle_input()
 
-    def get_surrounding_tiles(self):
-        # Get the coordinates of the tiles around the head
-        surrounding_coords = [(self.head.x + i, self.head.y + j) for i in [-1, 0, 1] for j in [-1, 0, 1] if (i, j) != (0, 0)]
-        surrounding_tiles = []
-        for coord in surrounding_coords:
-            if coord in [(block.x, block.y) for block in self.body]:
-                surrounding_tiles.append('body')
-            elif coord == self.food:  # Assuming you have the food's position handy
-                surrounding_tiles.append('food')
-            else:
-                surrounding_tiles.append('empty')
-        return surrounding_tiles
+    def get_surrounding_tiles(self, window_size=3):
+        # We'll check a window around the snake's head
+        tiles = np.zeros((window_size, window_size), dtype=int)
+
+        for i in range(-window_size // 2, window_size // 2 + 1):
+            for j in range(-window_size // 2, window_size // 2 + 1):
+                x, y = self.head.x + i, self.head.y + j
+
+                if x < 0 or x >= self.blocks_x or y < 0 or y >= self.blocks_y:
+                    tiles[i + window_size // 2, j + window_size // 2] = -1  # Wall
+                elif (x, y) in [(block.x, block.y) for block in self.body]:
+                    tiles[i + window_size // 2, j + window_size // 2] = 1  # Snake's body
+                elif x == self.food.block.x and y == self.food.block.y:
+                    tiles[i + window_size // 2, j + window_size // 2] = 2  # Food
+        return tiles
 
     def compute_surrounding_reward(self):
         tiles = self.get_surrounding_tiles()
@@ -125,7 +128,18 @@ class Snake:
                     dead = True
             if self.head.x >= self.blocks_x or self.head.x < 0 or self.head.y < 0 or self.head.y >= self.blocks_x:
                 dead = True
-                reward += self.death_penalty * (len(self.body) / self.init_length)
+                reward = self.death_penalty * (len(self.body) / self.init_length)
+
+            # Get surrounding tiles
+            tiles = self.get_surrounding_tiles()
+
+            # Penalize for creating gaps
+            for i in range(1, tiles.shape[0] - 1):
+                for j in range(1, tiles.shape[1] - 1):
+                    # If a cell is surrounded on all four sides by the body but is empty
+                    if tiles[i, j] == 0 and tiles[i - 1, j] == 1 and tiles[i + 1, j] == 1 and tiles[i, j - 1] == 1 and \
+                            tiles[i, j + 1] == 1:
+                        reward -= 5  # Adjust penalty as needed
 
         return self.observation(dead), reward, dead, truncated
 
