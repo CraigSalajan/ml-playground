@@ -131,7 +131,7 @@ class Snake:
                 reward = self.death_penalty * (len(self.body) / self.init_length)
 
             # Get surrounding tiles
-            tiles = self.get_surrounding_tiles()
+            tiles = self.get_surrounding_tiles(5)
 
             # Penalize for creating gaps
             for i in range(1, tiles.shape[0] - 1):
