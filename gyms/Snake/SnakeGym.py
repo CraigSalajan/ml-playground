@@ -9,9 +9,9 @@ class SnakeGym(gym.Env):
     def __init__(self, render_mode=None, **kwargs) -> None:
         self.render_mode = render_mode
         self.action_space = spaces.Discrete(4)
-        self.observation_space = spaces.Box(
-            float("-inf"), float("inf"), shape=(12,))
         self.snake = Snake(**kwargs)
+        self.observation_space = spaces.Box(
+            float("-inf"), float("inf"), shape=(self.snake.blocks_x * self.snake.blocks_y + 12,))
 
     def reset(self, seed=None, options=None):
         self.snake.init()

@@ -131,7 +131,7 @@ class Snake:
                 reward = self.death_penalty * (len(self.body) / self.init_length)
 
             # Get surrounding tiles
-            tiles = self.get_surrounding_tiles(10)
+            tiles = self.get_surrounding_tiles(5)
 
             # Penalize for creating gaps
             for i in range(1, tiles.shape[0] - 1):
@@ -144,20 +144,20 @@ class Snake:
         return self.observation(dead), reward, dead, truncated
 
     def get_board_state(self):
-        # Initialize board with zeros
-        board = np.zeros((self.blocks_x, self.blocks_y))
+        board_state = np.zeros((self.blocks_x, self.blocks_y), dtype=np.int32)
 
-        # Set snake body
+        # Food
+        fx, fy = self.food.block.x, self.food.block.y
+        if 0 <= fx < self.blocks_x and 0 <= fy < self.blocks_y:
+            board_state[fx][fy] = 2
+
+        # Snake body
         for block in self.body:
-            board[block.x][block.y] = 1
+            bx, by = block.x, block.y
+            if 0 <= bx < self.blocks_x and 0 <= by < self.blocks_y:
+                board_state[bx][by] = 1
 
-        # Set snake head
-        board[self.head.x][self.head.y] = 2
-
-        # Set food
-        board[self.food.block.x][self.food.block.y] = 3
-
-        return board.flatten()
+        return board_state.flatten()
 
     def observation(self, dead=False):
         # dx = self.head.x - self.food.block.x
