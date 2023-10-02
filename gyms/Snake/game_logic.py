@@ -131,7 +131,7 @@ class Snake:
                 reward = self.death_penalty * (len(self.body) / self.init_length)
 
             # Get surrounding tiles
-            tiles = self.get_surrounding_tiles(5)
+            tiles = self.get_surrounding_tiles(10)
 
             # Penalize for creating gaps
             for i in range(1, tiles.shape[0] - 1):
@@ -143,6 +143,22 @@ class Snake:
 
         return self.observation(dead), reward, dead, truncated
 
+    def get_board_state(self):
+        # Initialize board with zeros
+        board = np.zeros((self.blocks_x, self.blocks_y))
+
+        # Set snake body
+        for block in self.body:
+            board[block.x][block.y] = 1
+
+        # Set snake head
+        board[self.head.x][self.head.y] = 2
+
+        # Set food
+        board[self.food.block.x][self.food.block.y] = 3
+
+        return board.flatten()
+
     def observation(self, dead=False):
         # dx = self.head.x - self.food.block.x
         # dy = self.head.y - self.food.block.y
@@ -150,30 +166,51 @@ class Snake:
         # d0, d1, d2, d3 = self.calc_distance(dead)
         # return np.array([dx, dy, d0, d1, d2, d3], dtype=np.float32)
         # Direction to the food from the head
-        dx = self.head.x - self.food.block.x
-        dy = self.head.y - self.food.block.y
-        dx, dy = normalize(dx, dy)
+        # dx = self.head.x - self.food.block.x
+        # dy = self.head.y - self.food.block.y
+        # dx, dy = normalize(dx, dy)
+        #
+        # # Relative position of the head to the tail
+        # tail_dx = self.head.x - self.body[-1].x
+        # tail_dy = self.head.y - self.body[-1].y
+        # tail_dx, tail_dy = normalize(tail_dx, tail_dy)
+        #
+        # d0, d1, d2, d3 = self.calc_distance(dead)
+        #
+        # # Check for obstacles in each direction: Down, Up, Right, Left
+        # directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        # obstacles = []
+        #
+        # for dir in directions:
+        #     x, y = self.head.x + dir[0], self.head.y + dir[1]
+        #     if x < 0 or x >= self.blocks_x or y < 0 or y >= self.blocks_y or any(
+        #             block.x == x and block.y == y for block in self.body):
+        #         obstacles.append(1)  # Obstacle detected
+        #     else:
+        #         obstacles.append(0)  # No obstacle
+        #
+        # return np.array([dx, dy, tail_dx, tail_dy, d0, d1, d2, d3] + obstacles, dtype=np.float32)
 
-        # Relative position of the head to the tail
-        tail_dx = self.head.x - self.body[-1].x
-        tail_dy = self.head.y - self.body[-1].y
-        tail_dx, tail_dy = normalize(tail_dx, tail_dy)
-
+        # Current observations
+        dx, dy = normalize(self.head.x - self.food.block.x, self.head.y - self.food.block.y)
+        tail_dx, tail_dy = normalize(self.head.x - self.body[-1].x, self.head.y - self.body[-1].y)
         d0, d1, d2, d3 = self.calc_distance(dead)
 
         # Check for obstacles in each direction: Down, Up, Right, Left
         directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-        obstacles = []
+        obstacles = [1 if (self.head.x + dir[0] < 0 or self.head.x + dir[0] >= self.blocks_x or
+                           self.head.y + dir[1] < 0 or self.head.y + dir[1] >= self.blocks_y or
+                           any(block.x == self.head.x + dir[0] and block.y == self.head.y + dir[1] for block in
+                               self.body))
+                     else 0 for dir in directions]
 
-        for dir in directions:
-            x, y = self.head.x + dir[0], self.head.y + dir[1]
-            if x < 0 or x >= self.blocks_x or y < 0 or y >= self.blocks_y or any(
-                    block.x == x and block.y == y for block in self.body):
-                obstacles.append(1)  # Obstacle detected
-            else:
-                obstacles.append(0)  # No obstacle
+        current_obs = np.array([dx, dy, tail_dx, tail_dy, d0, d1, d2, d3] + obstacles, dtype=np.float32)
 
-        return np.array([dx, dy, tail_dx, tail_dy, d0, d1, d2, d3] + obstacles, dtype=np.float32)
+        # Board state
+        board_state = self.get_board_state()
+
+        # Concatenate both observations
+        return np.concatenate([current_obs, board_state])
 
     def calc_distance(self, dead):
         if dead:
