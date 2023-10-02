@@ -19,7 +19,7 @@ class Snake(BaseTrainer):
             "learning_rate": 1.5e-4,
             "living_bonus": -0.1,
             "max_step": 4096,
-            "num_envs": 10,
+            "num_envs": 1,
             "policy": "MlpPolicy",
             "vf_coef": 0.5
         }
