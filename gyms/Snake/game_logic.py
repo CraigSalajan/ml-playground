@@ -86,16 +86,6 @@ class Snake:
                     tiles[i + window_size // 2, j + window_size // 2] = 2  # Food
         return tiles
 
-    def compute_surrounding_reward(self):
-        tiles = self.get_surrounding_tiles()
-        reward = 0
-        for tile in tiles:
-            if tile == 'body':
-                reward -= 0.5  # example penalty
-            elif tile == 'food':
-                reward += 1  # example reward
-        return reward
-
     def step(self, direction):
         if direction is None:
             direction = self.direction
@@ -109,26 +99,37 @@ class Snake:
             step = Direction.step(self.direction)
         else:
             self.direction = direction
+
+        prev_distance_to_food = abs(self.head.x - self.food.block.x) + abs(self.head.y - self.food.block.y)
+
         self.head.x += step[0]
         self.head.y += step[1]
 
-        reward = self.living_bonus + self.calc_reward()
+        current_distance_to_food = abs(self.head.x - self.food.block.x) + abs(self.head.y - self.food.block.y)
+
+        reward = self.living_bonus
+
+        if current_distance_to_food < prev_distance_to_food:
+            reward += self.food_reward / (current_distance_to_food + 1)
+        else:
+            reward += -(self.food_reward / (current_distance_to_food + 1))  # Adjust this as needed
+
         dead = False
 
         if self.head == self.food.block:
             self.score += 1
             self.grow(x, y)
             self.food.new_food(self.blocks)
-            reward = self.food_reward
+            reward += self.food_reward
         else:
             self.move(x, y)
             for block in self.body:
                 if self.head == block:
-                    reward = (self.death_penalty * (len(self.body) / self.init_length)) * 2
+                    reward += (self.death_penalty * (len(self.body) / self.init_length)) * 2
                     dead = True
             if self.head.x >= self.blocks_x or self.head.x < 0 or self.head.y < 0 or self.head.y >= self.blocks_x:
                 dead = True
-                reward = self.death_penalty * (len(self.body) / self.init_length)
+                reward += self.death_penalty * (len(self.body) / self.init_length)
 
             # Get surrounding tiles
             tiles = self.get_surrounding_tiles(5)
@@ -136,7 +137,6 @@ class Snake:
             # Penalize for creating gaps
             for i in range(1, tiles.shape[0] - 1):
                 for j in range(1, tiles.shape[1] - 1):
-                    # If a cell is surrounded on all four sides by the body but is empty
                     if tiles[i, j] == 0 and tiles[i - 1, j] == 1 and tiles[i + 1, j] == 1 and tiles[i, j - 1] == 1 and \
                             tiles[i, j + 1] == 1:
                         reward -= 5  # Adjust penalty as needed
@@ -159,58 +159,31 @@ class Snake:
 
         return board_state.flatten()
 
+    def direction_to_vector(self, direction):
+        # Define a mapping from directions to vectors
+        direction_mapping = {
+            0: (0, -1),  # Up
+            1: (0, 1),  # Down
+            2: (-1, 0),  # Left
+            3: (1, 0)  # Right
+        }
+
+        return direction_mapping[direction]
+
     def observation(self, dead=False):
-        # dx = self.head.x - self.food.block.x
-        # dy = self.head.y - self.food.block.y
-        # dx, dy = normalize(dx, dy)
-        # d0, d1, d2, d3 = self.calc_distance(dead)
-        # return np.array([dx, dy, d0, d1, d2, d3], dtype=np.float32)
-        # Direction to the food from the head
-        # dx = self.head.x - self.food.block.x
-        # dy = self.head.y - self.food.block.y
-        # dx, dy = normalize(dx, dy)
-        #
-        # # Relative position of the head to the tail
-        # tail_dx = self.head.x - self.body[-1].x
-        # tail_dy = self.head.y - self.body[-1].y
-        # tail_dx, tail_dy = normalize(tail_dx, tail_dy)
-        #
-        # d0, d1, d2, d3 = self.calc_distance(dead)
-        #
-        # # Check for obstacles in each direction: Down, Up, Right, Left
-        # directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-        # obstacles = []
-        #
-        # for dir in directions:
-        #     x, y = self.head.x + dir[0], self.head.y + dir[1]
-        #     if x < 0 or x >= self.blocks_x or y < 0 or y >= self.blocks_y or any(
-        #             block.x == x and block.y == y for block in self.body):
-        #         obstacles.append(1)  # Obstacle detected
-        #     else:
-        #         obstacles.append(0)  # No obstacle
-        #
-        # return np.array([dx, dy, tail_dx, tail_dy, d0, d1, d2, d3] + obstacles, dtype=np.float32)
+        dx = self.head.x - self.food.block.x
+        dy = self.head.y - self.food.block.y
 
-        # Current observations
-        dx, dy = normalize(self.head.x - self.food.block.x, self.head.y - self.food.block.y)
-        tail_dx, tail_dy = normalize(self.head.x - self.body[-1].x, self.head.y - self.body[-1].y)
-        d0, d1, d2, d3 = self.calc_distance(dead)
-
-        # Check for obstacles in each direction: Down, Up, Right, Left
-        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-        obstacles = [1 if (self.head.x + dir[0] < 0 or self.head.x + dir[0] >= self.blocks_x or
-                           self.head.y + dir[1] < 0 or self.head.y + dir[1] >= self.blocks_y or
-                           any(block.x == self.head.x + dir[0] and block.y == self.head.y + dir[1] for block in
-                               self.body))
-                     else 0 for dir in directions]
-
-        current_obs = np.array([dx, dy, tail_dx, tail_dy, d0, d1, d2, d3] + obstacles, dtype=np.float32)
+        # Normalize Manhattan distance
+        max_distance = self.blocks_x + self.blocks_y  # max possible Manhattan distance
+        distance_to_food = (abs(dx) + abs(dy)) / max_distance
+        d1, d2 = self.direction_to_vector(int(self.direction))
 
         # Board state
         board_state = self.get_board_state()
 
-        # Concatenate both observations
-        return np.concatenate([current_obs, board_state])
+        # Concatenate all observations
+        return np.concatenate([board_state, [distance_to_food, d1, d2]])
 
     def calc_distance(self, dead):
         if dead:
@@ -261,7 +234,7 @@ class Snake:
         return {
             'head': (self.head.x, self.head.y),
             'food': (self.food.block.x, self.food.block.y),
-            'map': self.map.T
+            # 'map': self.map.T
         }
 
     def play(self, fps=10, acceleration=True, step=1, frep=10):
