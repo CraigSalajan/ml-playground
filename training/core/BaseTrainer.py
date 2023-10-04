@@ -76,8 +76,22 @@ class BaseTrainer(ABC):
         print(f"Loading training model at episode {max_value}")
         try:
             return (self.training_algorithm.load(
-                f"{self.model_save_path}/{self.project_name}/{run_id}/training_timesteps__{str(max_value)}_steps", env),
-                    max_value)
+                f"{self.model_save_path}/{self.project_name}/{run_id}/training_timesteps__{str(max_value)}_steps",
+                    env=env,
+                    custom_objects={
+                        "batch_size": self.config.get("n_steps") * self.config.get("num_envs"),
+                        "device": "cuda",
+                        "ent_coef":  self.config.get("ent_coef"),
+                        "gae_lambda": self.config.get("gae_lambda"),
+                        "gamma": self.config.get("gamma"),
+                        "learning_rate": self.config.get("learning_rate"),
+                            # n_steps=n_steps,
+                        "n_steps": self.config.get("n_steps"),
+                        "policy": self.config.get("policy"),
+                        "tensorboard_log": f"{self.tensorboard_logs}/{self.project_name}",
+                        "vf_coef": self.config.get("vf_coef")
+                    }
+                ), max_value)
         except:
             return self._create_model(env), None
 
