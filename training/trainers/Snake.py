@@ -20,6 +20,7 @@ class Snake(BaseTrainer):
             "living_bonus": -0.1,
             "max_step": 4096,
             "num_envs": 1,
+            "n_steps": 512,
             "policy": "MlpPolicy",
             "vf_coef": 0.5
         }

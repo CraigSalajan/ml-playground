@@ -50,6 +50,7 @@ class BaseTrainer(ABC):
         # n_steps = self.config.get("max_step") * self.config.get("num_envs")
         return self.training_algorithm(
             # batch_size= n_steps // 10,
+            batch_size=self.config.get("n_steps") * self.config.get("num_envs"),
             device="cuda",
             ent_coef=self.config.get("ent_coef"),
             env=env,
@@ -57,6 +58,7 @@ class BaseTrainer(ABC):
             gamma=self.config.get("gamma"),
             learning_rate=self.config.get("learning_rate"),
             # n_steps=n_steps,
+            n_steps=self.config.get("n_steps"),
             policy=self.config.get("policy"),
             tensorboard_log=f"{self.tensorboard_logs}/{self.project_name}",
             vf_coef=self.config.get("vf_coef")
