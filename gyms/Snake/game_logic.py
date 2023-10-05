@@ -1,34 +1,35 @@
-import math
 import numpy as np
+
+from gyms.Snake.Reward import Reward
 from gyms.Snake.utils import *
 
 
 class Snake:
     def __init__(
-        self,
-        fps=60,
-        max_step=500,
-        init_length=4,
-        food_reward=2.0,
-        dist_reward=None,
-        living_bonus=0.0,
-        death_penalty=-1.0,
-        width=40,
-        height=40,
-        block_size=20,
-        background_color=Color.orange,
-        food_color=Color.red,
-        head_color=Color.purple,
-        body_color=Color.blue,
+            self,
+            fps=60,
+            max_step=500,
+            init_length=4,
+            food_reward=2.0,
+            dist_reward=None,
+            living_bonus=0.0,
+            death_penalty=-1.0,
+            width=40,
+            height=40,
+            block_size=20,
+            background_color=Color.orange,
+            food_color=Color.red,
+            head_color=Color.purple,
+            body_color=Color.blue,
     ) -> None:
 
         self.episode = 0
         self.fps = fps
         self.max_step = max_step
-        self.init_length = min(init_length, width//2)
+        self.init_length = min(init_length, width // 2)
         self.food_reward = food_reward
         self.dist_reward = (
-            width+height)//4 if dist_reward is None else dist_reward
+                                   width + height) // 4 if dist_reward is None else dist_reward
         self.living_bonus = living_bonus
         self.death_penalty = death_penalty
         self.blocks_x = width
@@ -45,12 +46,19 @@ class Snake:
         self.clock = None
         self.human_playing = False
 
+        self.reward = Reward({
+            "food_reward": food_reward,
+            "dist_reward": dist_reward,
+            "death_penalty": death_penalty,
+            "living_bonus": living_bonus
+        })
+
     def init(self):
         self.episode += 1
         self.score = 0
         self.direction = 3
         self.current_step = 0
-        self.head = Block(self.blocks_x//2, self.blocks_y//2, self.head_color)
+        self.head = Block(self.blocks_x // 2, self.blocks_y // 2, self.head_color)
         self.body = [self.head.copy(i, 0, self.body_color)
                      for i in range(-self.init_length, 0)]
         self.blocks = [self.food.block, self.head, *self.body]
@@ -65,7 +73,7 @@ class Snake:
     def render(self):
         if self.screen is None:
             self.screen, self.clock = game_start(
-                self.blocks_x*Block.size, self.blocks_y*Block.size)
+                self.blocks_x * Block.size, self.blocks_y * Block.size)
         self.clock.tick(self.fps)
         update_screen(self.screen, self)
         handle_input()
@@ -87,6 +95,8 @@ class Snake:
         return tiles
 
     def step(self, direction):
+        ate_food = False
+
         if direction is None:
             direction = self.direction
         self.current_step += 1
@@ -100,19 +110,8 @@ class Snake:
         else:
             self.direction = direction
 
-        prev_distance_to_food = abs(self.head.x - self.food.block.x) + abs(self.head.y - self.food.block.y)
-
         self.head.x += step[0]
         self.head.y += step[1]
-
-        current_distance_to_food = abs(self.head.x - self.food.block.x) + abs(self.head.y - self.food.block.y)
-
-        reward = self.living_bonus
-
-        if current_distance_to_food < prev_distance_to_food:
-            reward += self.food_reward / (current_distance_to_food + 1)
-        else:
-            reward += -(self.food_reward / (current_distance_to_food + 1))  # Adjust this as needed
 
         dead = False
 
@@ -120,28 +119,19 @@ class Snake:
             self.score += 1
             self.grow(x, y)
             self.food.new_food(self.blocks)
-            reward += self.food_reward
+            ate_food = True
         else:
             self.move(x, y)
             for block in self.body:
                 if self.head == block:
-                    reward += (self.death_penalty * (len(self.body) / self.init_length)) * 2
                     dead = True
             if self.head.x >= self.blocks_x or self.head.x < 0 or self.head.y < 0 or self.head.y >= self.blocks_x:
                 dead = True
-                reward += self.death_penalty * (len(self.body) / self.init_length)
 
-            # Get surrounding tiles
-            tiles = self.get_surrounding_tiles(5)
+        # Get surrounding tiles
+        tiles = self.get_surrounding_tiles(5)
 
-            # Penalize for creating gaps
-            for i in range(1, tiles.shape[0] - 1):
-                for j in range(1, tiles.shape[1] - 1):
-                    if tiles[i, j] == 0 and tiles[i - 1, j] == 1 and tiles[i + 1, j] == 1 and tiles[i, j - 1] == 1 and \
-                            tiles[i, j + 1] == 1:
-                        reward -= 5  # Adjust penalty as needed
-
-        return self.observation(dead), reward, dead, truncated
+        return self.observation(dead), self.reward.calculate_reward(self.head, self.body, self.food, ate_food, tiles, dead), dead, truncated
 
     def get_board_state(self):
         board_state = np.zeros((self.blocks_x, self.blocks_y), dtype=np.int32)
@@ -157,7 +147,23 @@ class Snake:
             if 0 <= bx < self.blocks_x and 0 <= by < self.blocks_y:
                 board_state[bx][by] = 1
 
-        return board_state.flatten()
+        # Snake head
+        hx, hy = self.head.x, self.head.y
+        if 0 <= hx < self.blocks_x and 0 <= hy < self.blocks_y:
+            board_state[hx][hy] = 3
+
+        # Flatten the board state
+        flattened_board = board_state.flatten()
+
+        # Snake's Direction as one-hot encoded vector
+        # Assuming self.direction is between 0 and 3, representing Up, Down, Left, Right
+        direction_vector = [0, 0, 0, 0]
+        direction_vector[self.direction] = 1
+
+        # Combine the flattened board state with the direction vector
+        observation = np.concatenate([flattened_board, direction_vector])
+
+        return observation
 
     def direction_to_vector(self, direction):
         # Define a mapping from directions to vectors
@@ -210,15 +216,15 @@ class Snake:
             d3 += 1
             x += 1
         self.map[self.food.block.x][self.food.block.y] = 1
-        return d0/self.blocks_y, d1/self.blocks_y, d2/self.blocks_x, d3/self.blocks_x
+        return d0 / self.blocks_y, d1 / self.blocks_y, d2 / self.blocks_x, d3 / self.blocks_x
 
     def calc_reward(self):
         if self.dist_reward == 0.0:
             return 0
         x = self.head.x - self.food.block.x
         y = self.head.y - self.food.block.y
-        d = math.sqrt(x*x + y*y)
-        return (self.dist_reward-d)/self.dist_reward
+        d = math.sqrt(x * x + y * y)
+        return (self.dist_reward - d) / self.dist_reward
 
     def grow(self, x, y):
         body = Block(x, y, Color.blue)
@@ -247,7 +253,7 @@ class Snake:
         self.human_playing = True
         self.init()
         screen, clock = game_start(
-            self.blocks_x*Block.size, self.blocks_y*Block.size)
+            self.blocks_x * Block.size, self.blocks_y * Block.size)
         total_r = 0
 
         while pygame.get_init():

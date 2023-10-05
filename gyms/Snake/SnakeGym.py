@@ -11,7 +11,7 @@ class SnakeGym(gym.Env):
         self.action_space = spaces.Discrete(4)
         self.snake = Snake(**kwargs)
         self.observation_space = spaces.Box(
-            float("-inf"), float("inf"), shape=(self.snake.blocks_x * self.snake.blocks_y + 1 + 2,))
+            float("-inf"), float("inf"), shape=(self.snake.blocks_x * self.snake.blocks_y + 1 + 2 + 4,))
 
     def reset(self, seed=None, options=None):
         self.snake.init()
