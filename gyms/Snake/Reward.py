@@ -61,9 +61,10 @@ class Reward:
         gap_penalty = self._calculate_gap_penalty(tiles)
         death_penalty = self._calculate_death_penalty(dead, body)
         collision_penalty = self._calculate_self_collision_penalty(head, body)
+        living_penalty = self._calculate_living_penalty(ate_food)
 
         reward = food_reward + food_distance_reward + gap_penalty + death_penalty \
-            + collision_penalty + self.config.get("living_bonus")
+            + collision_penalty + living_penalty
 
         # if wandb.run is not None:
         #     wandb.Table({
