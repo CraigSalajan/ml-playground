@@ -8,6 +8,10 @@ class Reward:
         self.previous_food_distance = 0
         self.steps_without_food = 0
 
+    def reset(self):
+        self.previous_food_distance = 0
+        self.steps_without_food = 0
+
     def _calculate_food_distance_reward(self, head, food):
         current_distance = abs(head.x - food.block.x) + abs(head.y - food.block.y)
         distance_change = self.previous_food_distance - current_distance

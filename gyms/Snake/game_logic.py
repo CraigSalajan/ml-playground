@@ -64,6 +64,8 @@ class Snake:
         self.blocks = [self.food.block, self.head, *self.body]
         self.food.new_food(self.blocks)
 
+        self.reward.reset()
+
     def close(self):
         pygame.quit()
         pygame.display.quit()
