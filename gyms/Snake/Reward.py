@@ -48,7 +48,7 @@ class Reward:
     def _calculate_self_collision_penalty(self, head, body):
         for block in body[:-1]:  # Excluding the tail, as it will move in the next step
             if head == block:
-                return self.config.get('collision_penalty', -10)  # default penalty of -10
+                return self.config.get('death_penalty', -10)  # default penalty of -10
         return 0
 
     def _calculate_living_penalty(self, ate_food):
