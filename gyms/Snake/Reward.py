@@ -16,7 +16,7 @@ class Reward:
         current_distance = abs(head.x - food.block.x) + abs(head.y - food.block.y)
         distance_change = self.previous_food_distance - current_distance
 
-        reward_scaling_factor = 0.05
+        reward_scaling_factor = 5
         reward = reward_scaling_factor * distance_change
 
         self.previous_food_distance = current_distance
