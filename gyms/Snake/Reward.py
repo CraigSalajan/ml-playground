@@ -6,16 +6,16 @@ class Reward:
     def __init__(self, config):
         self.config = config
         self.previous_food_distance = 0
+        self.steps_without_food = 0
 
     def _calculate_food_distance_reward(self, head, food):
         current_distance = abs(head.x - food.block.x) + abs(head.y - food.block.y)
-        scaled_reward = 1 / (1 + current_distance)
-        distance_diff = self.previous_food_distance - current_distance
+        distance_change = self.previous_food_distance - current_distance
 
-        reward = scaled_reward if distance_diff > 0 else -scaled_reward
+        reward_scaling_factor = 0.1
+        reward = reward_scaling_factor * distance_change
 
         self.previous_food_distance = current_distance
-
         return reward
 
     def _calculate_death_penalty(self, dead, body):
@@ -46,6 +46,14 @@ class Reward:
             if head == block:
                 return self.config.get('collision_penalty', -10)  # default penalty of -10
         return 0
+
+    def _calculate_living_penalty(self, ate_food):
+        if ate_food:
+            self.steps_without_food = 0
+        else:
+            self.steps_without_food += 1
+
+        return self.config.get("living_bonus") * self.steps_without_food
 
     def calculate_reward(self, head, body, food, ate_food, tiles, dead):
         food_reward = self._calculate_food_reward(ate_food)
